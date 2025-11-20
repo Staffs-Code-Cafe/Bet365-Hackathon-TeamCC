@@ -1,6 +1,6 @@
 from wordfreq import zipf_frequency
 
-def is_english_word(word: str, threshold: float = 1.5) -> bool:
+def is_english_word(word: str, threshold: float = 2) -> bool:
     """
     Returns True if 'word' is a real English word (or English-like),
     otherwise returns False.
@@ -19,6 +19,6 @@ def is_english_word(word: str, threshold: float = 1.5) -> bool:
 
 
 print(is_english_word("microservices"))    # True
-print(is_english_word("xqplm"))    # False
+print(is_english_word("eht"))    # False
 print(is_english_word("florp"))    # True (looks English)
 print(is_english_word("asdjlk"))   # False

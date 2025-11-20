@@ -17,7 +17,7 @@ valURL = "https://dcrypt.run/validate"
 para = [""] * 76
 
 
-def is_english_word(word: str, threshold: float = 1.5) -> bool:
+def is_english_word(word: str, threshold: float = 2) -> bool:
     """
     Returns True if 'word' is a real English word (or English-like),
     otherwise returns False.
