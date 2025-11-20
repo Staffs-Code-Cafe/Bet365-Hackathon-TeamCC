@@ -28,8 +28,9 @@ def is_english_word(word: str, threshold: float = 2) -> bool:
         3.0 = strict (common words only)
     """
     word = word.lower().strip()
+    if word == "dna":
+        return False
 
-    # Wordfreq Zipf frequency score
     freq = zipf_frequency(word, "en")
 
     return freq >= threshold
@@ -93,9 +94,8 @@ def get_fragment(key):
                 temp = "".join(temp_list)
 
         except:
-            pass   # ignore errors
+            pass
 
-        # <-- FIX: assign no matter what
         para[pos] = temp
 
     return True
@@ -138,5 +138,12 @@ endKey = get_new_token()
 full_sentence = fill_sentence()
 print("\n✔ FULL SENTENCE:\n")
 print(full_sentence)
-requests.post(valURL, headers={"team": "CC", "token":endKey}, data={"submission": full_sentence})
+print(requests.post(valURL, headers={
+        "team": "CC",
+        "token": endKey,
+        "accept": "application/json",
+        "Content-Type": "application/json"
+    }, json={"submission": full_sentence}))
 
+
+#In a world built on microservices teams must work within an ecosystem that constantly shifts beneath them. Tokens expire data arrives in fragments responses fluctuate under load and chaos events disrupt the wolf without warning. Progress depends on interpreting incomplete signals reacting with precision and staying calm when the system behaves in unexpected ways. Each fragment reveals part of the truth and only by assembling them with patience and clarity can the full narrative be uncovered.
