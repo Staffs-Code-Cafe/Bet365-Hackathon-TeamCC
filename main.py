@@ -1,4 +1,5 @@
 import requests
+from wordfreq import zipf_frequency
 chars = [
     "a","b","c","d","e","f","g","h","i","j","k","l","m",
     "n","o","p","q","r","s","t","u","v","w","x","y","z",
@@ -14,6 +15,26 @@ authURL = "https://dcrypt.run/auth"
 fragURL = "https://dcrypt.run/fragment"
 valURL = "https://dcrypt.run/validate"
 para = [""] * 76
+
+
+def is_english_word(word: str, threshold: float = 1.5) -> bool:
+    """
+    Returns True if 'word' is a real English word (or English-like),
+    otherwise returns False.
+
+    threshold:
+        1.5 = lenient (allows rare/obscure words)
+        2.5 = good default
+        3.0 = strict (common words only)
+    """
+    word = word.lower().strip()
+
+    # Wordfreq Zipf frequency score
+    freq = zipf_frequency(word, "en")
+
+    return freq >= threshold
+
+
 
 def get_new_token():
     """Fetch a new token, safely handling errors."""
@@ -62,16 +83,21 @@ def get_fragment(key):
                 break
         try:
             if temp in nonWords:
-                    temp_list= list(temp)
-                    temp_list.reverse()
-                    temp = " ".join(temp_list)
-            elif (requests.get(f"https://api.dictionaryapi.dev/api/v2/entries/en/{temp}").json())["title"] is None:
-                temp_list= list(temp)
+                temp_list = list(temp)
                 temp_list.reverse()
-                temp = " ".join(temp_list)
+                temp = "".join(temp_list)
+
+            elif not is_english_word(temp):
+                temp_list = list(temp)
+                temp_list.reverse()
+                temp = "".join(temp_list)
+
         except:
-            para[pos] = temp
-        
+            pass   # ignore errors
+
+        # <-- FIX: assign no matter what
+        para[pos] = temp
+
     return True
 
 
@@ -112,5 +138,5 @@ endKey = get_new_token()
 full_sentence = fill_sentence()
 print("\n✔ FULL SENTENCE:\n")
 print(full_sentence)
-requests.post(valURL, headers={"team": "CC", "token":endKey}, body={"submission": full_sentence})
+requests.post(valURL, headers={"team": "CC", "token":endKey}, data={"submission": full_sentence})
 
