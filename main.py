@@ -1,157 +1,54 @@
 import requests
-from wordfreq import zipf_frequency
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 
-
-
-chars = [
-    "a","b","c","d","e","f","g","h","i","j","k","l","m",
-    "n","o","p","q","r","s","t","u","v","w","x","y","z",
-    "A","B","C","D","E","F","G","H","I","J","K","L","M",
-    "N","O","P","Q","R","S","T","U","V","W","X","Y","Z",
-    "."
-]
-
-nonWords = [
-    "ni","no","na","fo","yb","eb", "etautculf", ".ways", "nad", "nI", "wolf", "taht"]
-
-authURL = "https://dcrypt.run/auth"
-fragURL = "https://dcrypt.run/fragment"
-valURL = "https://dcrypt.run/validate"
-para = [""] * 76
-
-
-def is_english_word(word: str, threshold: float = 2) -> bool:
-    """
-    Returns True if 'word' is a real English word (or English-like),
-    otherwise returns False.
-
-    threshold:
-        1.5 = lenient (allows rare/obscure words)
-        2.5 = good default
-        3.0 = strict (common words only)
-    """
-    word = word.lower().strip()
-    if word == "dna":
-        return False
-
-    freq = zipf_frequency(word, "en")
-
-    return freq >= threshold
-
-
-
-def get_new_token():
-    """Fetch a new token, safely handling errors."""
+def get_token():
+    url = "https://dcrypt.run/auth"
+    headers = {"team": "Code Cafe"}
+    
+    r = requests.post(url, headers=headers)
+    data = r.json()
+    print(data)
     try:
-        r = requests.post(authURL, headers={"accept": "application/json", "team": "CC"})
-        data = r.json()
-    except Exception as e:
-        print("Auth request error:", e)
-        return None
-
-    if "token" not in data:
-        print("Auth error:", data)
-        return None
-
-    return data["token"]
-
-
-def get_fragment(key):
-    """Fetch a single fragment using the token."""
-    try:
-        r = requests.get(fragURL, headers={"team": "CC", "token": key}, timeout=0.5)
-        data = r.json()
-    except Exception as e:
-        print("Fragment request error:", e)
-        return None
-
-    try:
-        print("Fragment:", data["word"])
+        return data["token"]
     except:
-        print("Fragment data error:", data)
-        return None
-    # Validate required fields
-    if "position" not in data or "word" not in data:
-        return None
-
-    try:
-        pos = int(data["position"])
-    except:
-        return None
-
-    if 0 <= pos < len(para):
-        temp = ""
-        temp_list = []
-        for i in data["word"]:
-            if i in chars:
-                temp += i
-            else:
-            
-                break
-        try:
-            if temp in nonWords:
-                temp_list = list(temp)
-                temp_list.reverse()
-                temp = "".join(temp_list)
-
-            elif not is_english_word(temp):
-                temp_list = list(temp)
-                temp_list.reverse()
-                temp = "".join(temp_list)
-
-        except:
-            pass
-
-        para[pos] = temp
-
-    return True
+        raise Exception("Failed to retrieve token")
 
 
-def fill_sentence():
+def get_fragment(token):
+    url = "https://dcrypt.run/fragment"  # replace with your endpoint
+    headers = {"Authorization": f"Bearer {token}"}
 
-    key = get_new_token()
-    if not key:
-        print("Could not obtain initial token")
-        return ""
-
-    request_count = 0
-    while "" in para:
-
-        # Refresh key every 20 requests
-        if request_count >= 20:
-            print("\nRefreshing token...\n")
-            key = get_new_token()
-            if not key:
-                print("Could not refresh token")
-                return ""
-            request_count = 0
-
-        success = get_fragment(key)
-        request_count += 1
-        for i in para:
-            print(i)
-
-        if not success:
-            print("Failed fragment fetch, continuing...")
-
-    # Build final sentence
-    return " ".join(para)
+    r = requests.get(url, headers=headers, timeout=10)
+    return r.json()
 
 
-# ---- RUN ----
-
-endKey = get_new_token()
-full_sentence = fill_sentence()
-print("\n✔ FULL SENTENCE:\n")
-print(full_sentence)
-print(requests.post(valURL, headers={
-        "team": "CC",
-        "token": endKey,
-        "accept": "application/json",
-        "Content-Type": "application/json"
-    }, json={"submission": full_sentence}))
 
 
-#In a world built on microservices teams must work within an ecosystem that constantly shifts beneath them. Tokens expire data arrives in fragments responses fluctuate under load and chaos events disrupt the wolf without warning. Progress depends on interpreting incomplete signals reacting with precision and staying calm when the system behaves in unexpected ways. Each fragment reveals part of the truth and only by assembling them with patience and clarity can the full narrative be uncovered.
+def fetch_20_fragments(token):
+    fragment_results = []
+
+    with ThreadPoolExecutor(max_workers=20) as executor:
+        # create 20 parallel jobs
+        futures = [
+            executor.submit(get_fragment, token)
+            for _ in range(20)
+        ]
+
+        # gather results as they finish
+        for future in as_completed(futures):
+            fragment_results.append(future.result())
+
+    return fragment_results
+
+
+# Run
+
+if __name__ == "__main__":
+    token = get_token()
+    fragments = fetch_20_fragments(token)
+
+    print("Received", len(fragments), "fragments:")
+    for frag in fragments:
+        print(frag)
