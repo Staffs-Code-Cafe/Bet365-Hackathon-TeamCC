@@ -1,5 +1,10 @@
 import requests
 from wordfreq import zipf_frequency
+
+
+
+
+
 chars = [
     "a","b","c","d","e","f","g","h","i","j","k","l","m",
     "n","o","p","q","r","s","t","u","v","w","x","y","z",
@@ -9,7 +14,7 @@ chars = [
 ]
 
 nonWords = [
-    "ni","no","na","fo","yb","eb", "etautculf", ".ways", "nad", "nI"]
+    "ni","no","na","fo","yb","eb", "etautculf", ".ways", "nad", "nI", "wolf", "taht"]
 
 authURL = "https://dcrypt.run/auth"
 fragURL = "https://dcrypt.run/fragment"
@@ -62,8 +67,11 @@ def get_fragment(key):
         print("Fragment request error:", e)
         return None
 
-    print("Fragment:", data)
-
+    try:
+        print("Fragment:", data["word"])
+    except:
+        print("Fragment data error:", data)
+        return None
     # Validate required fields
     if "position" not in data or "word" not in data:
         return None
