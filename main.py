@@ -17,8 +17,8 @@ def get_token():
 
 
 def get_fragment(token):
-    url = "https://dcrypt.run/fragment"  # replace with your endpoint
-    headers = {"Authorization": f"Bearer {token}"}
+    url = "https://dcrypt.run/fragment"
+    headers = {"team": "Code Cafe", "token": token}
 
     r = requests.get(url, headers=headers, timeout=10)
     return r.json()
